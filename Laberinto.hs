@@ -34,6 +34,13 @@ caminoSinSalida = Trifurcacion {
     recto = Nothing
 }
 
+-- | Funcion que crea un Tesoro dada la descripcion y el laberinto
+crearTesoro :: String -> Laberinto -> Tesoro
+crearTesoro descripcion laberinto = Tesoro {
+    descripcion = descripcion,
+    laberinto = Just laberinto
+}
+
 -- | Main
 main = do
     putStrLn "hola mano qlq"
