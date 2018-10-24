@@ -11,17 +11,27 @@ para manipular estos.
 module Laberinto (Laberinto, main) where
 
 -- | El tipo de dato Laberinto consiste de una Trifurcacion y un Maybe Tesoro
-data Laberinto = Laberinto Trifurcacion (Maybe Tesoro)
+data Laberinto = Either Trifurcacion Tesoro
 
+-- | El tipo de dato Trifurcacion nos permite saber hacia donde podemos ir
 data Trifurcacion = Trifurcacion {
     izquierda :: Maybe Laberinto,
     derecha :: Maybe Laberinto,
     recto :: Maybe Laberinto
 }
 
+-- | El tipo de dato Tesoro nos permite saber que es el tesoro y que mas puedo encontrar.
 data Tesoro = Tesoro {
     descripcion :: String,
     laberinto :: Maybe Laberinto
+}
+
+-- | Funcion que crea un camino sin salida
+caminoSinSalida :: Trifurcacion
+caminoSinSalida = Trifurcacion {
+    izquierda = Nothing,
+    derecha = Nothing,
+    recto = Nothing
 }
 
 -- | Main
