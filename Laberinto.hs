@@ -82,8 +82,6 @@ obtenerLabDeTesoro _ _ = Nothing
 -- | Funcion que dado un laberinto y una direccion, retorna un Maybe laberinto
 -- indicando que se descubrira
 obtenerLaberintoPorDir :: Laberinto -> Direccion -> Maybe Laberinto
--- obtenerLaberintoPorDir (Either t _) dir = obtenerLabDeTrifur t dir
--- obtenerLaberintoPorDir (Either _ t) dir = obtenerLabDeTesoro t dir
 obtenerLaberintoPorDir lab dir = case lab of
     -- Cuando es una trifurcacion, puedo retornar lo que diga la direccion
     Left trifur -> obtenerLabDeTrifur trifur dir
