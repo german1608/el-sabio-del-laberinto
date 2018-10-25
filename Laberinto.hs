@@ -89,6 +89,21 @@ obtenerLaberintoPorDir lab dir = case lab of
     Left trifur -> obtenerLabDeTrifur trifur dir
     Right tesoro -> obtenerLabDeTesoro tesoro dir
 
+-- Funcion que dado un laberinto me da el laberinto (o no) que conseguira
+-- si se dirige a la izquierda
+izquierdaLab :: Laberinto -> Maybe Laberinto
+izquierdaLab = flip obtenerLaberintoPorDir $ Izquierda
+
+-- Funcion que dado un laberinto me da el laberinto (o no) que conseguira
+-- si se dirige a la derecha
+derechaLab :: Laberinto -> Maybe Laberinto
+derechaLab = flip obtenerLaberintoPorDir $ Derecha
+
+-- Funcion que dado un laberinto me da el laberinto (o no) que conseguira
+-- si sigue derecho
+rectoLab :: Laberinto -> Maybe Laberinto
+rectoLab = flip obtenerLaberintoPorDir $ Recto
+
 -- | Main
 main = do
     putStrLn "hola mano qlq"
