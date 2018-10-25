@@ -11,7 +11,7 @@ para manipular estos.
 module Laberinto (Laberinto, main) where
 
 -- | El tipo de dato Laberinto consiste de una Trifurcacion y un Maybe Tesoro
-data Laberinto = Either Trifurcacion Tesoro
+type Laberinto = Either Trifurcacion Tesoro
 
 -- | El tipo de dato Trifurcacion nos permite saber hacia donde podemos ir
 data Trifurcacion = Trifurcacion {
