@@ -66,6 +66,28 @@ alterarTrifurcacion trifur lab Recto = Trifurcacion {
 
 -- Funciones de Acceso
 
+-- | Funcion que permite acceder a un atributo de una trifurcacion
+-- dado el lado que se desea explorar
+obtenerLabDeTrifur :: Trifurcacion -> Direccion -> Maybe Laberinto
+obtenerLabDeTrifur t Izquierda = izquierda t
+obtenerLabDeTrifur t Derecha = derecha t
+obtenerLabDeTrifur t Recto = recto t
+
+-- | Funcion que dado un tesoro y una direccion, retorna lo que se encontraria
+-- si sigue esa direccion.
+obtenerLabDeTesoro :: Tesoro -> Direccion -> Maybe Laberinto
+obtenerLabDeTesoro t Recto = laberinto t
+obtenerLabDeTesoro _ _ = Nothing
+
+-- | Funcion que dado un laberinto y una direccion, retorna un Maybe laberinto
+-- indicando que se descubrira
+obtenerLaberintoPorDir :: Laberinto -> Direccion -> Maybe Laberinto
+-- obtenerLaberintoPorDir (Either t _) dir = obtenerLabDeTrifur t dir
+-- obtenerLaberintoPorDir (Either _ t) dir = obtenerLabDeTesoro t dir
+obtenerLaberintoPorDir lab dir = case lab of
+    -- Cuando es una trifurcacion, puedo retornar lo que diga la direccion
+    Left trifur -> obtenerLabDeTrifur trifur dir
+    Right tesoro -> obtenerLabDeTesoro tesoro dir
 
 -- | Main
 main = do
