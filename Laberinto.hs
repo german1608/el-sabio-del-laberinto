@@ -26,6 +26,10 @@ data Tesoro = Tesoro {
     laberinto :: Maybe Laberinto
 }
 
+-- | Direccion hacia donde dirigirme recorriendo el laberinto
+data Direccion = Izquierda | Derecha | Recto
+
+-- Funciones de Construccion
 -- | Funcion que crea un camino sin salida
 caminoSinSalida :: Trifurcacion
 caminoSinSalida = Trifurcacion {
@@ -40,6 +44,28 @@ crearTesoro descripcion laberinto = Tesoro {
     descripcion = descripcion,
     laberinto = Just laberinto
 }
+
+-- | Funcion que altera el laberinto hacia donde se va a ir en cierto lado de
+-- una trifurcacion
+alterarTrifurcacion :: Trifurcacion -> Laberinto -> Direccion -> Trifurcacion
+alterarTrifurcacion trifur lab Izquierda = Trifurcacion {
+    izquierda = Just lab,
+    derecha = derecha trifur,
+    recto = recto trifur
+}
+alterarTrifurcacion trifur lab Derecha = Trifurcacion {
+    izquierda = izquierda trifur,
+    derecha = Just lab,
+    recto = recto trifur
+}
+alterarTrifurcacion trifur lab Recto = Trifurcacion {
+    izquierda = izquierda trifur,
+    recto = Just lab,
+    derecha = derecha trifur
+}
+
+-- Funciones de Acceso
+
 
 -- | Main
 main = do
