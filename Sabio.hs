@@ -14,8 +14,8 @@ opcionesPosiblesConMsj = [
     ("7", "Dar nombre al laberinto"),
     ("8", "Hablar de un laberinto de nombre conocido")]
 
-opciones :: [Int]
-opciones = map (read . fst) opcionesPosiblesConMsj
+opciones :: [String]
+opciones = map fst opcionesPosiblesConMsj
 
 -- | Funcion que imprime el menu con las posibles opciones
 imprimirMenu :: IO ()
@@ -26,11 +26,11 @@ imprimirMenu = putStr $
 prompt :: IO ()
 prompt = do
     imprimirMenu
-    o:_ <- getLine
-    if not ((isDigit o) && ((digitToInt o) `elem` opciones)) then do
+    opcion <- getLine
+    if not $ opcion `elem` opciones then do
         putStrLn "Opción incorrecta"
         putStr "Las opciones correctas son: "
-        putStrLn $ intercalate ", " $ map show opciones
+        putStrLn $ intercalate ", "  opciones
     else
         putStr "op"
     prompt
