@@ -1,5 +1,6 @@
 module Main (main) where
 import Laberinto
+import Data.Char (digitToInt)
 
 opcionesPosiblesConMsj :: [(Char, String)]
 opcionesPosiblesConMsj = [('1', "Hablar de un laberinto nuevo"),
@@ -10,6 +11,9 @@ opcionesPosiblesConMsj = [('1', "Hablar de un laberinto nuevo"),
     ('6', "Reportar tesoro hallado"),
     ('7', "Dar nombre al laberinto"),
     ('8', "Hablar de un laberinto de nombre conocido")]
+
+opciones :: [Int]
+opciones = map (digitToInt . fst) opcionesPosiblesConMsj
 
 -- | Funcion que imprime el menu con las posibles opciones
 imprimirMenu :: IO ()
