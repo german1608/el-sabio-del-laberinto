@@ -3,4 +3,6 @@ build:
 run: build
 	./Sabio
 clean:
-	find . -name "*.hi" -name ".o" -exec rm -rf {} +
+	- rm *.o 2> /dev/null
+	- rm *.hi 2> /dev/null
+	- rm Sabio 2> /dev/null
