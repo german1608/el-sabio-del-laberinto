@@ -8,7 +8,7 @@ Maintainer  : 14-10924@usb.ve, 13-10625@usb.ve
 Contiene los tipos de datos y las funciones que se van a usar
 para manipular estos.
 -}
-module Laberinto (Laberinto, main) where
+module Laberinto (Laberinto) where
 
 -- | El tipo de dato Laberinto consiste de una Trifurcacion y un Maybe Tesoro
 type Laberinto = Either Trifurcacion Tesoro
@@ -101,7 +101,3 @@ derechaLab = flip obtenerLaberintoPorDir $ Derecha
 -- si sigue derecho
 rectoLab :: Laberinto -> Maybe Laberinto
 rectoLab = flip obtenerLaberintoPorDir $ Recto
-
--- | Main
-main = do
-    putStrLn "hola mano qlq"
