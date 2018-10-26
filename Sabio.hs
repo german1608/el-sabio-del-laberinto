@@ -1,8 +1,8 @@
 module Main (main) where
 import Laberinto
 
-opcionesPosibles :: [(Char, String)]
-opcionesPosibles = [('1', "Hablar de un laberinto nuevo"),
+opcionesPosiblesConMsj :: [(Char, String)]
+opcionesPosiblesConMsj = [('1', "Hablar de un laberinto nuevo"),
     ('2', "Quiero darte una ruta"),
     ('3', "Reportar pared abierta"),
     ('4', "Reportar derrumbe"),
@@ -14,7 +14,7 @@ opcionesPosibles = [('1', "Hablar de un laberinto nuevo"),
 -- | Funcion que imprime el menu con las posibles opciones
 imprimirMenu :: IO ()
 imprimirMenu = putStr $
-    foldl (\acc (x,y) -> acc ++ [x] ++ ") " ++ y ++ "\n") "" opcionesPosibles
+    foldl (\acc (x,y) -> acc ++ [x] ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj
 
 main :: IO ()
 main = do
