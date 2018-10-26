@@ -1,6 +1,7 @@
 module Main (main) where
 import Laberinto
-import Data.Char (digitToInt)
+import Data.Char (digitToInt, isDigit)
+import Data.List (intercalate)
 
 opcionesPosiblesConMsj :: [(Char, String)]
 opcionesPosiblesConMsj = [('1', "Hablar de un laberinto nuevo"),
@@ -20,8 +21,21 @@ imprimirMenu :: IO ()
 imprimirMenu = putStr $
     foldl (\acc (x,y) -> acc ++ [x] ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj
 
+-- | Funcion que hace prompt al user por las opciones adecuadas
+prompt :: IO ()
+prompt = do
+    imprimirMenu
+    o:_ <- getLine
+    if not ((isDigit o) && ((digitToInt o) `elem` opciones)) then do
+        putStrLn "Opción incorrecta"
+        putStr "Las opciones correctas son:"
+        putStrLn $ intercalate ", " $ map show opciones
+    else
+        putStr "op"
+    prompt
+
 main :: IO ()
 main = do
     putStrLn "¡Hola!"
     putStrLn "Soy el sabio del laberinto, ¿me indicas qué deseas hacer?"
-    imprimirMenu
+    prompt
