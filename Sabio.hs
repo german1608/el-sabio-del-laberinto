@@ -2,6 +2,14 @@ module Main (main) where
 import Laberinto
 import Data.Char (digitToInt, isDigit)
 import Data.List (intercalate)
+import Control.Monad.State
+
+type Ruta = [Direccion]
+type Sabio = StateT (Laberinto, Ruta) IO ()
+
+-- Alias para liftIO
+io :: IO a -> StateT x IO a
+io = liftIO
 
 -- | Lista con tuplas para indicar opciones posibles y su mensaje para
 -- indicar al usuario que se ejecutara cuando se escoga esa opcion
@@ -22,25 +30,45 @@ opciones :: [String]
 opciones = map fst opcionesPosiblesConMsj
 
 -- | Funcion que imprime el menu con las posibles opciones
-imprimirMenu :: IO ()
-imprimirMenu = putStr $
+imprimirMenu :: Sabio
+imprimirMenu = io $ putStr $
     foldl (\acc (x,y) -> acc ++ x ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj
 
+-- | Funcion que reemplaza el laberinto actual por el nuevo laberinto
+-- que diga el usuario
+preguntarRuta :: Sabio
+preguntarRuta = do
+    io $ putStrLn "Introduzca la ruta:"
+    io $ putStrLn "Instrucciones:"
+    io $ putStrLn "\t(>) derecha"
+    io $ putStrLn "\t(<) izquierda"
+    io $ putStrLn "\t(^) recto"
+    io $ putStrLn "\t(x) fin"
+    io $ putStrLn "Ejemplo:"
+    io $ putStrLn ">"
+    io $ putStrLn "<"
+    io $ putStrLn "^"
+    io $ putStrLn "<"
+    io $ putStrLn "^"
+    io $ putStrLn "<"
+    io $ putStrLn "x"
+
 -- | Funcion que hace prompt al user por las opciones adecuadas
-prompt :: IO ()
+prompt :: Sabio
 prompt = do
     imprimirMenu
-    opcion <- getLine
+    opcion <- io $ getLine
     if not $ opcion `elem` opciones then do
-        putStrLn "Opción incorrecta"
-        putStr "Las opciones correctas son: "
-        putStrLn $ intercalate ", "  opciones
+        io $ putStrLn "Opción incorrecta"
+        io $ putStr "Las opciones correctas son: "
+        io $ putStrLn $ intercalate ", "  opciones
     else
-        putStr "op"
+        preguntarRuta
     prompt
 
 main :: IO ()
 main = do
     putStrLn "¡Hola!"
     putStrLn "Soy el sabio del laberinto, ¿me indicas qué deseas hacer?"
-    prompt
+    runStateT prompt (Left caminoSinSalida, [])
+    return ()

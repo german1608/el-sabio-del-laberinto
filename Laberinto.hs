@@ -8,7 +8,11 @@ Maintainer  : 14-10924@usb.ve, 13-10625@usb.ve
 Contiene los tipos de datos y las funciones que se van a usar
 para manipular estos.
 -}
-module Laberinto (Laberinto) where
+module Laberinto (
+    Laberinto,
+    Direccion,
+    caminoSinSalida
+    ) where
 
 -- | El tipo de dato Laberinto consiste de una Trifurcacion y un Maybe Tesoro
 type Laberinto = Either Trifurcacion Tesoro
