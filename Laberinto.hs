@@ -18,13 +18,13 @@ data Trifurcacion = Trifurcacion {
     izquierda :: Maybe Laberinto,
     derecha :: Maybe Laberinto,
     recto :: Maybe Laberinto
-}
+} deriving Show
 
 -- | El tipo de dato Tesoro nos permite saber que es el tesoro y que mas puedo encontrar.
 data Tesoro = Tesoro {
     descripcion :: String,
     laberinto :: Maybe Laberinto
-}
+} deriving Show
 
 -- | Direccion hacia donde dirigirme recorriendo el laberinto
 data Direccion = Izquierda | Derecha | Recto
