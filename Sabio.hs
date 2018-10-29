@@ -3,6 +3,7 @@ import Laberinto
 import System.IO (hSetBuffering, stdout, BufferMode(NoBuffering))
 import Data.Char (digitToInt, isDigit)
 import Data.List (intercalate)
+import Data.Maybe (fromJust)
 import qualified Control.Monad.State as ST
 
 type Sabio = ST.StateT (Laberinto, Ruta) IO ()
@@ -20,7 +21,7 @@ opcionesPosiblesConMsj = [
     ("2", "Quiero darte una ruta", return ()),
     ("3", "Reportar pared abierta", reportarParedAbierta),
     ("4", "Reportar derrumbe", reportarDerrumbe),
-    ("5", "Reportar tesoro tomado", return ()),
+    ("5", "Reportar tesoro tomado", reportarTesoroTomado),
     ("6", "Reportar tesoro hallado", return ()),
     ("7", "Dar nombre al laberinto", return ()),
     ("8", "Hablar de un laberinto de nombre conocido", return ())
@@ -78,7 +79,7 @@ reportarDerrumbe = do
     let ruta = parsearRuta c
     io $ putStrLn "Ahora dame una direccion (mismo formato que el anterior):"
     c <- io getLine
-    let prepared = derrumbarPared labInicial ruta
+    let prepared = fromJust . derrumbarPared labInicial ruta
     case c of
         ">" -> ST.put(prepared Derecha, [])
         "<" -> ST.put(prepared Izquierda, [])
@@ -87,9 +88,27 @@ reportarDerrumbe = do
             io $ putStrLn "Opcion equivocada"
             reportarDerrumbe
 
+-- | Controlador para la opcion de reportar tesoros tomados
+reportarTesoroTomado :: Sabio
+reportarTesoroTomado = do
+    -- Obtenemos el laberinto actual
+    (labInicial, _) <- ST.get
+    io imprimirInstrDeRuta
+    c <- io getLine
+    let ruta = parsearRuta c
+    if length ruta == 0 then do
+        io $ putStrLn "La ruta no puede ser vacia"
+        reportarTesoroTomado
+    else if caigoEnTesoro labInicial ruta then
+        ST.put (tomarTesoro labInicial ruta, [])
+    else
+        io $ putStrLn "La ruta suministrada no dirige a ningun tesoro"
+
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
 prompt = do
+    (lab, _) <- ST.get
+    io $ print lab
     imprimirMenu
     opcion <- io getLine
     if not $ opcion `elem` opciones then do
