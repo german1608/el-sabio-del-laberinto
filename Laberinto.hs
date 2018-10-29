@@ -39,6 +39,10 @@ caminoSinSalida = Trifurcacion {
     recto = Nothing
 }
 
+-- | Laberinto vacio
+laberintoVacio :: Laberinto
+laberintoVacio = Left caminoSinSalida
+
 -- | Funcion que crea un Tesoro dada la descripcion y el laberinto
 crearTesoro :: String -> Laberinto -> Tesoro
 crearTesoro descripcion laberinto = Tesoro {
