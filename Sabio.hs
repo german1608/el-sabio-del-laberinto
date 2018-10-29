@@ -35,7 +35,8 @@ opciones = map (\(x,_,_) -> x) opcionesPosiblesConMsj
 -- | Funcion que imprime el menu con las posibles opciones
 imprimirMenu :: Sabio
 imprimirMenu = io $ putStr $
-    foldl (\acc (x,y,_) -> acc ++ x ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj
+    (foldl (\acc (x,y,_) -> acc ++ x ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj) ++
+    "> "
 
 -- | Funcion que imprime las instrucciones para pedir la ruta al usuario
 imprimirInstrDeRuta :: IO ()
@@ -48,6 +49,7 @@ imprimirInstrDeRuta = do
     putStrLn "Ejemplo:"
     putStrLn "><^<^<"
     putStrLn "Si introduce un caracter erroneo en algun momento se ignorará"
+    putStr "> "
 
 
 -- | Funcion que reemplaza el laberinto actual por el nuevo laberinto
@@ -151,7 +153,6 @@ cargarLaberintoDeArchivo = do
 recorrerLaberinto :: Sabio
 recorrerLaberinto = do
     (lab, ruta) <- ST.get
-    io $ print lab
     case ruta of
         [] -> return ()
         (r:rs) -> do
@@ -171,7 +172,6 @@ ejecutarRuta = do
     else if esRutaSinSalida labInicial ruta then
         io $ putStrLn "¡Has llegado a una ruta sin salida!"
     else do
-        io $ print labInicial
         ST.put (labInicial, ruta)
         recorrerLaberinto
 
@@ -207,7 +207,6 @@ preguntarRuta = do
 prompt :: Sabio
 prompt = do
     (lab, _) <- ST.get
-    io $ print lab
     imprimirMenu
     opcion <- io getLine
     if not $ opcion `elem` opciones then do
