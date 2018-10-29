@@ -231,9 +231,10 @@ imprimirTesoro :: Laberinto -> Ruta -> String
 -- Caso base, cuando encontremos el tesoro devolvemos la descripcion de este
 imprimirTesoro (Right tesoro) [] = descripcion tesoro
 -- Caso recursivo, recorremos hacia la direccion que indique
-imprimirTesoro l (x:xs) =
-    let Just labSiguiente = obtenerLaberintoPorDir l x
-    in imprimirTesoro labSiguiente xs
+imprimirTesoro l (x:xs) = let labSiguiente = obtenerLaberintoPorDir l x in
+    case labSiguiente of
+        Nothing -> imprimirTesoro l xs
+        Just l' -> imprimirTesoro l' xs
 
 -- Funcion que verifica si al final de la ruta se termina en un camino sin salida
 esRutaSinSalida :: Laberinto -> Ruta -> Bool
