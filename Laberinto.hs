@@ -219,15 +219,15 @@ abrirRutaPared :: Laberinto -- ^ Laberinto que se esta recorriendo
 abrirRutaPared l [] = l
 abrirRutaPared l (x:xs) =
     -- Extraemos la trifurcacion
-    let Left trif = l
-        -- Obtenemos el empate
-        labSiguiente = obtenerLaberintoPorDir l x
+    let labSiguiente = obtenerLaberintoPorDir l x
         laberintoAPegar = case labSiguiente of
             -- Llegue a una pared, me toca construir un nuevo laberinto
             Nothing -> construirLaberintoDeRuta xs
             -- Puedo seguir recorriendo
             Just lab -> abrirRutaPared lab xs
-    in Left $ alterarTrifurcacion trif (Just laberintoAPegar) x
+    in case l of
+        Left trif -> Left $ alterarTrifurcacion trif (Just laberintoAPegar) x
+        Right tesoro -> Right $ crearTesoro (descripcion tesoro) (Just laberintoAPegar)
 
 {- | Función que dada una direccion, un laberinto y una ruta pone en Nothing
 la direccion en el laberinto luego de recorrer la ruta
