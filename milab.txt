@@ -1,0 +1,1 @@
+Left (Trifurcacion {izquierda = Nothing, derecha = Nothing, recto = Just (Right (Tesoro {descripcion = "nojoda", laberinto = Nothing}))})

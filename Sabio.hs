@@ -1,6 +1,7 @@
 module Main (main) where
 import Laberinto
-import System.IO (writeFile)
+import System.IO (writeFile, hSetBuffering, stdout, BufferMode(NoBuffering))
+import System.Directory (doesFileExist)
 import Data.Char (digitToInt, isDigit)
 import Data.List (intercalate)
 import Data.Maybe (fromJust)
@@ -24,7 +25,7 @@ opcionesPosiblesConMsj = [
     ("5", "Reportar tesoro tomado", reportarTesoroTomado),
     ("6", "Reportar tesoro hallado", reportarTesoroHallado),
     ("7", "Dar nombre al laberinto", darNombreAlLaberinto),
-    ("8", "Hablar de un laberinto de nombre conocido", return ())
+    ("8", "Hablar de un laberinto de nombre conocido", cargarLaberintoDeArchivo)
     ]
 
 -- | Opciones posibles para saber si el input del usuario es correcto
@@ -129,6 +130,18 @@ darNombreAlLaberinto = do
     io $ writeFile nombre $ show lab
     io $ putStrLn "¡Archivo guardado!"
 
+-- | Controlador para cargar el laberinto desde un archivo
+cargarLaberintoDeArchivo :: Sabio
+cargarLaberintoDeArchivo = do
+    io $ putStr "Escriba el nombre del laberinto que desea cargar: "
+    nombre <- io getLine
+    archivoExiste <- io $ doesFileExist nombre
+    if not archivoExiste then do
+        io $ putStrLn "El archivo suministrado no existe"
+        cargarLaberintoDeArchivo
+    else do
+        contents <- io $ readFile nombre
+        ST.put (read contents, [])
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
@@ -149,6 +162,7 @@ prompt = do
 
 main :: IO ()
 main = do
+    hSetBuffering stdout NoBuffering
     putStrLn "¡Hola!"
     putStrLn "Soy el sabio del laberinto, ¿me indicas qué deseas hacer?"
     ST.runStateT prompt (laberintoVacio, [])
