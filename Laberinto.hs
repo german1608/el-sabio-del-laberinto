@@ -222,3 +222,13 @@ ponerTesoro l (x:xs) =
         Just lab -> let nuevoLaberinto = Just $ ponerTesoro lab xs in case lab of
             Left trif -> Left $ alterarTrifurcacion trif nuevoLaberinto x
             Right tesoro -> Right $ crearTesoro (descripcion tesoro) nuevoLaberinto
+
+-- Funcion que dado un laberinto y una ruta imprime el tesoro que hay al final
+-- de esa ruta. Como precondicion debe existir un tesoro al final de la ruta
+imprimirTesoro :: Laberinto -> Ruta -> String
+-- Caso base, cuando encontremos el tesoro devolvemos la descripcion de este
+imprimirTesoro (Right tesoro) [] = descripcion tesoro
+-- Caso recursivo, recorremos hacia la direccion que indique
+imprimirTesoro l (x:xs) =
+    let Just labSiguiente = obtenerLaberintoPorDir l x
+    in imprimirTesoro labSiguiente xs
