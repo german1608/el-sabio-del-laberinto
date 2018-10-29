@@ -54,28 +54,28 @@ laberintoVacio :: Laberinto
 laberintoVacio = Left caminoSinSalida
 
 -- | Funcion que crea un Tesoro dada la descripcion y el laberinto
-crearTesoro :: String -> Laberinto -> Tesoro
+crearTesoro :: String -> Maybe Laberinto -> Tesoro
 crearTesoro descripcion laberinto = Tesoro {
     descripcion = descripcion,
-    laberinto = Just laberinto
+    laberinto = laberinto
 }
 
 -- | Funcion que altera el laberinto hacia donde se va a ir en cierto lado de
 -- una trifurcacion
-alterarTrifurcacion :: Trifurcacion -> Laberinto -> Direccion -> Trifurcacion
+alterarTrifurcacion :: Trifurcacion -> Maybe Laberinto -> Direccion -> Trifurcacion
 alterarTrifurcacion trifur lab Izquierda = Trifurcacion {
-    izquierda = Just lab,
+    izquierda = lab,
     derecha = derecha trifur,
     recto = recto trifur
 }
 alterarTrifurcacion trifur lab Derecha = Trifurcacion {
     izquierda = izquierda trifur,
-    derecha = Just lab,
+    derecha = lab,
     recto = recto trifur
 }
 alterarTrifurcacion trifur lab Recto = Trifurcacion {
     izquierda = izquierda trifur,
-    recto = Just lab,
+    recto = lab,
     derecha = derecha trifur
 }
 
@@ -126,7 +126,7 @@ rectoLab = flip obtenerLaberintoPorDir $ Recto
 construirLaberintoDeRuta :: Ruta -> Laberinto
 construirLaberintoDeRuta [] = Left caminoSinSalida
 construirLaberintoDeRuta (x:xs) =
-    Left $ alterarTrifurcacion caminoSinSalida (construirLaberintoDeRuta xs) x
+    Left $ alterarTrifurcacion caminoSinSalida (Just $ construirLaberintoDeRuta xs) x
 
 
 -- | Funcion que recorre el laberinto hasta que encuentre una pared.
@@ -144,31 +144,58 @@ abrirRutaPared l (x:xs) =
             Nothing -> construirLaberintoDeRuta xs
             -- Puedo seguir recorriendo
             Just lab -> abrirRutaPared lab xs
-    in Left $ alterarTrifurcacion trif laberintoAPegar x
+    in Left $ alterarTrifurcacion trif (Just laberintoAPegar) x
 
 -- | Funcion que dada una direccion, un laberinto y una ruta pone en Nothing
 -- la direccion en el laberinto luego de recorrer la ruta
-derrumbarPared :: Laberinto -> Ruta -> Direccion -> Laberinto
+derrumbarPared :: Laberinto -> Ruta -> Direccion -> Maybe Laberinto
 derrumbarPared l [] d =
-    let Left trif = l in Left $ case d of
-        Derecha -> Trifurcacion {
-            izquierda = izquierda trif,
-            recto = recto trif,
-            derecha = Nothing
-        }
-        Izquierda -> Trifurcacion {
-            izquierda = Nothing,
-            recto = recto trif,
-            derecha = derecha trif
-        }
-        Recto -> Trifurcacion {
-            izquierda = izquierda trif,
-            recto = Nothing,
-            derecha = derecha trif
-        }
+    let Left trif = l in Just $ Left $ alterarTrifurcacion trif Nothing d
 derrumbarPared l (x:xs) d =
     let labASeguir = obtenerLaberintoPorDir l x
         Left trif = l
-        in case labASeguir of
+        in Just $ case labASeguir of
             Just lab -> Left $ alterarTrifurcacion trif (derrumbarPared lab xs d) x
             Nothing -> Left $ alterarTrifurcacion trif (derrumbarPared l xs d) x
+
+-- | Funcion que dado un laberinto y una ruta determina si al final de la ruta
+-- el usuario se encontrara en un tesoro o no.
+caigoEnTesoro :: Laberinto -> Ruta -> Bool
+caigoEnTesoro (Right tesoro) [] = True
+caigoEnTesoro (Left trif) [] = False
+caigoEnTesoro l (r:rs) =
+    let labASeguir = obtenerLaberintoPorDir l r in
+        case labASeguir of
+            Just lab -> True && caigoEnTesoro lab rs
+            Nothing -> True && caigoEnTesoro l rs
+
+-- | Funcion que toma un laberinto, una ruta y si al final de esta hay un tesoro,
+-- se elimina y si habia un camino despues del mismo se reemplaza con este.
+-- La precondicion es que la ruta que se siga en el laberinto lleve a un tesoro
+-- cuando la ruta este vacia
+tomarTesoro :: Laberinto -> Ruta -> Laberinto
+-- El caso con la ruta vacia no es de nuestro interes
+tomarTesoro _ [] = error "Uso incorrecto de tomarTesoro"
+-- Ya recorri toda la ruta y el siguiente step es un tesoro por la
+-- precondicion
+tomarTesoro l [x] =
+    let (Just tesoro) = obtenerLaberintoPorDir l x
+        despuesDeTesoro = obtenerLaberintoPorDir tesoro x
+    in case l of
+        Left trif -> Left $ alterarTrifurcacion trif despuesDeTesoro x
+        Right tesoro -> Right $ crearTesoro (descripcion tesoro) despuesDeTesoro
+
+-- Hay que seguir recorriendo
+tomarTesoro l@(Right tesoro) (r:rs) =
+    let labASeguir = obtenerLaberintoPorDir l r in
+        case labASeguir of
+            Nothing ->
+                tomarTesoro l rs
+            Just lab ->
+                Right $ crearTesoro (descripcion tesoro) $ Just $ tomarTesoro lab rs
+                -- tomarTesoro (Right $ crearTesoro (descripcion tesoro) lab) rs
+tomarTesoro l@(Left trif) (r:rs) =
+    let labASeguir = obtenerLaberintoPorDir l r in
+        case labASeguir of
+            Nothing -> tomarTesoro l rs
+            Just lab -> Left $ alterarTrifurcacion trif (Just $ tomarTesoro lab rs) r
