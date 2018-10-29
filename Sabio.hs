@@ -13,27 +13,28 @@ io :: IO a -> ST.StateT x IO a
 io = ST.liftIO
 
 -- | Lista con tuplas para indicar opciones posibles y su mensaje para
--- indicar al usuario que se ejecutara cuando se escoga esa opcion
-opcionesPosiblesConMsj :: [(String, String)]
+-- indicar al usuario que se ejecutara cuando se escoga esa opcion.
+-- Tambien se indica la funcion que se va a ejecutar en cada caso
+opcionesPosiblesConMsj :: [(String, String, Sabio)]
 opcionesPosiblesConMsj = [
-    ("1", "Hablar de un laberinto nuevo"),
-    ("2", "Quiero darte una ruta"),
-    ("3", "Reportar pared abierta"),
-    ("4", "Reportar derrumbe"),
-    ("5", "Reportar tesoro tomado"),
-    ("6", "Reportar tesoro hallado"),
-    ("7", "Dar nombre al laberinto"),
-    ("8", "Hablar de un laberinto de nombre conocido")
+    ("1", "Hablar de un laberinto nuevo", laberintoNuevo),
+    ("2", "Quiero darte una ruta", return ()),
+    ("3", "Reportar pared abierta", return ()),
+    ("4", "Reportar derrumbe", return ()),
+    ("5", "Reportar tesoro tomado", return ()),
+    ("6", "Reportar tesoro hallado", return ()),
+    ("7", "Dar nombre al laberinto", return ()),
+    ("8", "Hablar de un laberinto de nombre conocido", return ())
     ]
 
 -- | Opciones posibles para saber si el input del usuario es correcto
 opciones :: [String]
-opciones = map fst opcionesPosiblesConMsj
+opciones = map (\(x,_,_) -> x) opcionesPosiblesConMsj
 
 -- | Funcion que imprime el menu con las posibles opciones
 imprimirMenu :: Sabio
 imprimirMenu = io $ putStr $
-    foldl (\acc (x,y) -> acc ++ x ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj
+    foldl (\acc (x,y,_) -> acc ++ x ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj
 
 -- | Funcion que imprime las instrucciones para pedir la ruta al usuario
 imprimirInstrDeRuta :: IO ()
@@ -88,8 +89,9 @@ prompt = do
         io $ putStrLn "Opción incorrecta"
         io $ putStr "Las opciones correctas son: "
         io $ putStrLn $ intercalate ", "  opciones
-    else
-        laberintoNuevo
+    else do
+        let [(_, _, accion)] = filter (\(x,_,_) -> x == opcion) opcionesPosiblesConMsj
+        accion
     prompt
 
 main :: IO ()
