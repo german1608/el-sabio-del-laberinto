@@ -2,14 +2,14 @@ module Main (main) where
 import Laberinto
 import Data.Char (digitToInt, isDigit)
 import Data.List (intercalate)
-import Control.Monad.State
+import qualified Control.Monad.State as ST
 
 type Ruta = [Direccion]
-type Sabio = StateT (Laberinto, Ruta) IO ()
+type Sabio = ST.StateT (Laberinto, Ruta) IO ()
 
 -- Alias para liftIO
-io :: IO a -> StateT x IO a
-io = liftIO
+io :: IO a -> ST.StateT x IO a
+io = ST.liftIO
 
 -- | Lista con tuplas para indicar opciones posibles y su mensaje para
 -- indicar al usuario que se ejecutara cuando se escoga esa opcion
@@ -34,41 +34,66 @@ imprimirMenu :: Sabio
 imprimirMenu = io $ putStr $
     foldl (\acc (x,y) -> acc ++ x ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj
 
+imprimirInstrDeRuta :: IO ()
+imprimirInstrDeRuta = do
+    putStrLn "Introduzca la ruta:"
+    putStrLn "Instrucciones:"
+    putStrLn "\t(>) derecha"
+    putStrLn "\t(<) izquierda"
+    putStrLn "\t(^) recto"
+    putStrLn "\t(x) fin"
+    putStrLn "Ejemplo:"
+    putStrLn "><^<^<x"
+    putStrLn "Si introduce un caracter erroneo en algun momento no se pierde la ruta"
+
+leerRuta :: Sabio
+leerRuta = do
+    c <- io getChar
+    io $ print c
+    if not $ c `elem` ['>', '<', '^', 'x'] then do
+        io $ putStrLn "Caracter inválido."
+        leerRuta
+    else do
+        (lab, ruta) <- ST.get
+        case c of
+            'x' -> return ()
+            '>' -> do
+                ST.put $ (lab, Derecha:ruta)
+                leerRuta
+            '<' -> do
+                ST.put $ (lab, Izquierda:ruta)
+                leerRuta
+            '^' -> do
+                ST.put $ (lab, Recto:ruta)
+                leerRuta
+
 -- | Funcion que reemplaza el laberinto actual por el nuevo laberinto
 -- que diga el usuario
-preguntarRuta :: Sabio
-preguntarRuta = do
-    io $ putStrLn "Introduzca la ruta:"
-    io $ putStrLn "Instrucciones:"
-    io $ putStrLn "\t(>) derecha"
-    io $ putStrLn "\t(<) izquierda"
-    io $ putStrLn "\t(^) recto"
-    io $ putStrLn "\t(x) fin"
-    io $ putStrLn "Ejemplo:"
-    io $ putStrLn ">"
-    io $ putStrLn "<"
-    io $ putStrLn "^"
-    io $ putStrLn "<"
-    io $ putStrLn "^"
-    io $ putStrLn "<"
-    io $ putStrLn "x"
+laberintoNuevo :: Sabio
+laberintoNuevo = do
+    io $ imprimirInstrDeRuta
+    ST.put $ (laberintoVacio, [])
+    leerRuta
+    io $ putStrLn "listo"
+    (_, ruta) <- ST.get
+    io $ print ruta
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
 prompt = do
     imprimirMenu
-    opcion <- io $ getLine
+    opcion <- io getLine
     if not $ opcion `elem` opciones then do
         io $ putStrLn "Opción incorrecta"
         io $ putStr "Las opciones correctas son: "
         io $ putStrLn $ intercalate ", "  opciones
     else
-        preguntarRuta
+        laberintoNuevo
     prompt
 
 main :: IO ()
 main = do
     putStrLn "¡Hola!"
     putStrLn "Soy el sabio del laberinto, ¿me indicas qué deseas hacer?"
-    runStateT prompt (Left caminoSinSalida, [])
+    ST.runStateT prompt (laberintoVacio, [])
     return ()
