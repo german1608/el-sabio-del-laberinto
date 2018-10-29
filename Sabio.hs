@@ -1,5 +1,15 @@
-module Main (main) where
-import Laberinto
+{-|
+Module      : Sabio
+Description : Main y uso de las funciones y tipos de datos usados en Laberinto
+Copyright   : (c) German Robayo, 2018
+                  Gabriel Gutierrez, 2018
+Maintainer  : 14-10924@usb.ve, 13-10625@usb.ve
+
+Contiene los tipos de datos y las funciones que se van a usar
+para manipular estos.
+-}
+module Main where
+import Laberinto hiding (obtenerLabDeTrifur)
 import System.IO (writeFile, hSetBuffering, stdout, BufferMode(NoBuffering))
 import System.Directory (doesFileExist)
 import Data.Char (digitToInt, isDigit)
@@ -7,15 +17,17 @@ import Data.List (intercalate)
 import Data.Maybe (fromJust)
 import qualified Control.Monad.State as ST
 
+-- | Tipo de dato para recordar el estado del laberinto en cada recursión
+-- y realizar acciones IO.
 type Sabio = ST.StateT (Laberinto, Ruta) IO ()
 
--- Alias para liftIO
+-- | Alias para liftIO
 io :: IO a -> ST.StateT x IO a
 io = ST.liftIO
 
 -- | Lista con tuplas para indicar opciones posibles y su mensaje para
 -- indicar al usuario que se ejecutara cuando se escoga esa opcion.
--- Tambien se indica la funcion que se va a ejecutar en cada caso
+-- Tambien se indica la función que se va a ejecutar en cada caso
 opcionesPosiblesConMsj :: [(String, String, Sabio)]
 opcionesPosiblesConMsj = [
     ("1", "Hablar de un laberinto nuevo", laberintoNuevo),
@@ -32,13 +44,13 @@ opcionesPosiblesConMsj = [
 opciones :: [String]
 opciones = map (\(x,_,_) -> x) opcionesPosiblesConMsj
 
--- | Funcion que imprime el menu con las posibles opciones
+-- | Función que imprime el menu con las posibles opciones
 imprimirMenu :: Sabio
 imprimirMenu = io $ putStr $
     (foldl (\acc (x,y,_) -> acc ++ x ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj) ++
     "> "
 
--- | Funcion que imprime las instrucciones para pedir la ruta al usuario
+-- | Función que imprime las instrucciones para pedir la ruta al usuario
 imprimirInstrDeRuta :: IO ()
 imprimirInstrDeRuta = do
     putStrLn "Introduzca la ruta:"
@@ -52,8 +64,9 @@ imprimirInstrDeRuta = do
     putStr "> "
 
 
--- | Funcion que reemplaza el laberinto actual por el nuevo laberinto
--- que diga el usuario
+-- | Función que reemplaza el laberinto actual por el nuevo laberinto
+-- que diga el usuario. Leemos una ruta y a partir de ella construimos nuestro
+-- laberinto nuevo usando 'Laberinto.construirLaberintoDeRuta'
 laberintoNuevo :: Sabio
 laberintoNuevo = do
     io imprimirInstrDeRuta
@@ -61,7 +74,8 @@ laberintoNuevo = do
     c <- io getLine
     ST.put (construirLaberintoDeRuta $ parsearRuta c, [])
 
--- | controlador de la opcion para reportar pared abierta
+-- | Controlador de la opcion para reportar pared abierta. Leemos una ruta por parte
+-- del usuario y ejecutamos la funcion 'Laberinto.abrirRutaPared'
 reportarParedAbierta :: Sabio
 reportarParedAbierta = do
     -- Obtenemos el estado actual dl laberinto para recuperar el inicio
@@ -72,7 +86,8 @@ reportarParedAbierta = do
     let ruta = parsearRuta c -- parseamos el string con la ruta
     ST.put (abrirRutaPared labInicial ruta, ruta) -- Reemplazamos el estado para que vaya consumiendo la ruta
 
--- | Controlador para la opcion para reportar derrumbe
+-- | Controlador para la opcion para reportar derrumbe. Leemos una ruta por parte del
+-- usuario, una direccion y ejecutamos la funcion 'Laberinto.derrumbarPared'
 reportarDerrumbe :: Sabio
 reportarDerrumbe = do
     -- Obtenemos el laberinto actual
@@ -91,7 +106,8 @@ reportarDerrumbe = do
             io $ putStrLn "Opcion equivocada"
             reportarDerrumbe
 
--- | Controlador para la opcion de reportar tesoros tomados
+-- | Controlador para la opcion de reportar tesoros tomados. Leemos una ruta por
+-- parte del usuario y ejecutamos la funcion 'Laberinto.tomarTesoro'
 reportarTesoroTomado :: Sabio
 reportarTesoroTomado = do
     -- Obtenemos el laberinto actual
@@ -107,7 +123,8 @@ reportarTesoroTomado = do
     else
         io $ putStrLn "La ruta suministrada no dirige a ningun tesoro"
 
--- | Controlador para la opcion de reportar tesoros hallado
+-- | Controlador para la opcion de reportar tesoros hallado. Leemos una ruta
+-- por parte del usuario y quita el tesoro al final de esta usando 'Laberinto.ponerTesoro'
 reportarTesoroHallado :: Sabio
 reportarTesoroHallado = do
     -- Obtenemos el laberinto actual
@@ -123,7 +140,8 @@ reportarTesoroHallado = do
     else
         ST.put (ponerTesoro labInicial ruta, [])
 
--- | Controlador para dar nombre al laberinto
+-- | Controlador para dar nombre al laberinto. Leemos el nombre un archivo y guardamos
+-- la representacion en el mismo.
 darNombreAlLaberinto :: Sabio
 darNombreAlLaberinto = do
     io $ putStr "Escriba el nombre del laberinto: "
@@ -132,7 +150,8 @@ darNombreAlLaberinto = do
     io $ writeFile nombre $ show lab
     io $ putStrLn "¡Archivo guardado!"
 
--- | Controlador para cargar el laberinto desde un archivo
+-- | Controlador para cargar el laberinto desde un archivo. Leemos el nombre de un archivo
+-- y parseamos la representacion a uno que la computadora pueda entender.
 cargarLaberintoDeArchivo :: Sabio
 cargarLaberintoDeArchivo = do
     io $ putStr "Escriba el nombre del laberinto que desea cargar: "
@@ -145,11 +164,8 @@ cargarLaberintoDeArchivo = do
         contents <- io $ readFile nombre
         ST.put (read contents, [])
 
--- -- | Funcion que se llama cuando no hayan tesoros ni caminos sin salida
--- -- luego de recorrer la ruta
--- preguntarRuta' :: Sabio
--- preguntarRuta' = do
--- | Funcion que recorre
+-- | Función que recorre el laberinto con la ruta modificando el laberinto
+-- a medida que seguimos.
 recorrerLaberinto :: Sabio
 recorrerLaberinto = do
     (lab, ruta) <- ST.get
@@ -162,6 +178,8 @@ recorrerLaberinto = do
                 Just lab' -> ST.put (lab', rs)
             recorrerLaberinto
 
+-- | Funcion que que pide input sobre las rutas del usuario y le
+-- indicasi hay tesoros, rutas sin salidas o si es posible cambiar la misma.
 ejecutarRuta :: Sabio
 ejecutarRuta = do
     (labInicial, ruta) <- ST.get
@@ -191,7 +209,8 @@ ejecutarRuta = do
             _ -> do
                 io $ putStrLn "Opcion equivocada"
 
--- | Controlador para preguntar la ruta al usuario
+-- | Controlador para preguntar la ruta al usuario. Establece una forma de recuperar
+-- el laberinto inicial cuando se termina la interaccion con el usuario
 preguntarRuta :: Sabio
 preguntarRuta = do
     io imprimirInstrDeRuta
@@ -203,7 +222,7 @@ preguntarRuta = do
     ST.put(labInicial, [])
 
 
--- | Funcion que hace prompt al user por las opciones adecuadas
+-- | Función que hace prompt al user por las opciones adecuadas.
 prompt :: Sabio
 prompt = do
     (lab, _) <- ST.get
@@ -219,6 +238,7 @@ prompt = do
         accion
     prompt
 
+-- | Funcion que se va a ejecutar cuando se invoque el ejecutable final
 main :: IO ()
 main = do
     hSetBuffering stdout NoBuffering
