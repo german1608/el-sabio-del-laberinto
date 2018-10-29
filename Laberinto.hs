@@ -13,27 +13,51 @@ module Laberinto where
 -- | El tipo de dato Laberinto consiste de una Trifurcacion y un Maybe Tesoro
 type Laberinto = Either Trifurcacion Tesoro
 
--- | El tipo de dato Trifurcacion nos permite saber hacia donde podemos ir
+-- | El tipo de dato Trifurcacion nos permite construir trifurcaciones en el laberinto
+-- Las trifurcaciones son las que le dan al laberinto su estructura particular
 data Trifurcacion = Trifurcacion {
-    izquierda :: Maybe Laberinto,
-    derecha :: Maybe Laberinto,
-    recto :: Maybe Laberinto
+    izquierda :: Maybe Laberinto, -- ^ Lo descubrible si vamos hacia la izquierda
+    derecha :: Maybe Laberinto, -- ^ Lo descubrible si vamos hacia la derecha
+    recto :: Maybe Laberinto -- ^ Lo descubrible si seguimos derecho
 } deriving (Show, Read)
 
 -- | El tipo de dato Tesoro nos permite saber que es el tesoro y que mas puedo encontrar.
 data Tesoro = Tesoro {
-    descripcion :: String,
-    laberinto :: Maybe Laberinto
+    descripcion :: String, -- Descripcion del tesoro en caso de que decidamos reclamarlo
+    laberinto :: Maybe Laberinto -- Que conseguimos si seguimos de largo ignorando el tesoro
 } deriving (Show, Read)
 
--- | Direccion hacia donde dirigirme recorriendo el laberinto
-data Direccion = Izquierda | Derecha | Recto
+-- | Tipo de dato cuyo unico uso es evitar usar strings para identificar las direcciones
+data Direccion = Izquierda
+    | Derecha
+    | Recto
     deriving Show
 
--- | Cadena de Direcciones
+-- | Cadena de Direcciones. Se usa para almacenar las rutas que ingresa el usuario
 type Ruta = [Direccion]
 
--- | Funcion que lee un string y lo transforma a direcciones
+{- | Función que lee un string y lo transforma a direcciones.
+La función ignora los caracteres no pertenecientes a @"><^"@
+y hace el siguiente mapping:
+
+@
+> -> Derecha
+> -> Izquierda
+^ -> Recto
+@
+
+Ejemplos:
+
+@
+>>> parsearRuta "^^^^"
+[Recto,Recto,Recto,Recto]
+>>> parsearRuta "<><>"
+[Izquierda,Derecha,Izquierda,Derecha]
+>>> parsearRuta "letras super random>"
+[Derecha]
+@
+
+-}
 parsearRuta :: String -> [Direccion]
 parsearRuta = map (\c -> case c of
         '>' -> Derecha
@@ -41,7 +65,19 @@ parsearRuta = map (\c -> case c of
         '^' -> Recto) . filter (\x -> x `elem` "<>^")
 
 -- Funciones de Construccion
--- | Funcion que crea un camino sin salida
+
+{- | Función que crea un camino sin salida.
+Un camino sin salida es una 'Trifurcacion' en la que todos sus lados llevan a @Nothing@.
+Básicamente es equivalente a esto:
+
+@
+Trifurcacion {
+    izquierda = Nothing,
+    derecha = Nothing,
+    recto = Nothing
+}
+@
+-}
 caminoSinSalida :: Trifurcacion
 caminoSinSalida = Trifurcacion {
     izquierda = Nothing,
@@ -49,20 +85,34 @@ caminoSinSalida = Trifurcacion {
     recto = Nothing
 }
 
--- | Laberinto vacio
+-- | Un laberinto vacio es una 'Trifurcacion' en la que todos sus caminos llevan a @Nothing@
 laberintoVacio :: Laberinto
 laberintoVacio = Left caminoSinSalida
 
--- | Funcion que crea un Tesoro dada la descripcion y el laberinto
-crearTesoro :: String -> Maybe Laberinto -> Tesoro
+{- | Función que crea un Tesoro dada la descripcion y el laberinto
+-- Ejemplos:
+
+@
+>>> crearTesoro "El mejor tesoro del mundo" Nothing
+Tesoro {descripcion = "El mejor tesoro del mundo", laberinto = Nothing}
+>>> crearTesoro "El mejor tesoro del mundo v2.0" Just $ Trifurcacion {...}
+Tesoro {descripcion = "El mejor tesoro del mundo v2.0", laberinto = Just (Trifurcacion {...})})
+@
+-}
+crearTesoro :: String -- ^ Nombre del tesoro
+    -> Maybe Laberinto -- ^ Posible laberinto que se seguira cuando se ignore el tesoro
+    -> Tesoro -- 'Tesoro' tal que su descripcion y laberinto son los que se pasaron anteriormente
 crearTesoro descripcion laberinto = Tesoro {
     descripcion = descripcion,
     laberinto = laberinto
 }
 
--- | Funcion que altera el laberinto hacia donde se va a ir en cierto lado de
--- una trifurcacion
-alterarTrifurcacion :: Trifurcacion -> Maybe Laberinto -> Direccion -> Trifurcacion
+{- | Función que una una trifurcacion y un laberinto mediante una direccion especificada.
+-}
+alterarTrifurcacion :: Trifurcacion -- ^ Trifurcacion que se va a "alterar"
+    -> Maybe Laberinto -- ^ Nuevo @Maybe 'Laberinto'@ que se va a pegar en la direccion especificada desde la trifuracion
+    -> Direccion -- ^ Direccion que se va a alterar de la trifurcacion
+    -> Trifurcacion -- ^ Nueva trifurcacion alterada
 alterarTrifurcacion trifur lab Izquierda = Trifurcacion {
     izquierda = lab,
     derecha = derecha trifur,
@@ -81,58 +131,91 @@ alterarTrifurcacion trifur lab Recto = Trifurcacion {
 
 -- Funciones de Acceso
 
--- | Funcion que permite acceder a un atributo de una trifurcacion
+{- | Función que permite acceder a un atributo de una trifurcacion
 -- dado el lado que se desea explorar
-obtenerLabDeTrifur :: Trifurcacion -> Direccion -> Maybe Laberinto
+-}
+obtenerLabDeTrifur :: Trifurcacion -- ^ Trifurcacion de interes
+    -> Direccion -- ^ Direccion que nos interesa acceder
+    -> Maybe Laberinto -- ^ Lo que se encuentra hacia la direccion especificada
 obtenerLabDeTrifur t Izquierda = izquierda t
 obtenerLabDeTrifur t Derecha = derecha t
 obtenerLabDeTrifur t Recto = recto t
 
--- | Funcion que dado un tesoro y una direccion, retorna lo que se encontraria
--- si sigue esa direccion.
-obtenerLabDeTesoro :: Tesoro -> Direccion -> Maybe Laberinto
+{- | Función que dado un tesoro y una direccion, retorna lo que se encontraria
+ si sigue esa direccion.
+-}
+obtenerLabDeTesoro :: Tesoro -- ^ Tesoro de interes
+    -> Direccion -- ^ Direccion que nos interesa acceder
+    -> Maybe Laberinto -- ^ Lo que se encuentra hacia la dirección especificada
 obtenerLabDeTesoro t Recto = laberinto t
 obtenerLabDeTesoro _ _ = Nothing
 
--- | Funcion que dado un laberinto y una direccion, retorna un Maybe laberinto
--- indicando que se descubrira
-obtenerLaberintoPorDir :: Laberinto -> Direccion -> Maybe Laberinto
+{- | Función que dado un laberinto y una direccion, retorna un Maybe laberinto
+ indicando que se descubrira
+-}
+obtenerLaberintoPorDir :: Laberinto -- ^ Laberinto de interés
+    -> Direccion -- ^ Dirección que nos interesa acceder
+    -> Maybe Laberinto -- ^ Lo que se encuentra hacia la dirección especificada
 obtenerLaberintoPorDir lab dir = case lab of
     -- Cuando es una trifurcacion, puedo retornar lo que diga la direccion
     Left trifur -> obtenerLabDeTrifur trifur dir
     Right tesoro -> obtenerLabDeTesoro tesoro dir
 
--- Funcion que dado un laberinto me da el laberinto (o no) que conseguira
--- si se dirige a la izquierda
-izquierdaLab :: Laberinto -> Maybe Laberinto
+{- | Función que dado un laberinto me da el laberinto (o no) que conseguira
+ si se dirige a la izquierda
+-}
+izquierdaLab :: Laberinto -- ^ Laberinto de interés
+    -> Maybe Laberinto -- ^ Lo que se encuentra hacia la izquierda
 izquierdaLab = flip obtenerLaberintoPorDir $ Izquierda
 
--- Funcion que dado un laberinto me da el laberinto (o no) que conseguira
--- si se dirige a la derecha
-derechaLab :: Laberinto -> Maybe Laberinto
+{- | Función que dado un laberinto me da el laberinto (o no) que conseguira
+ si se dirige a la derecha
+-}
+derechaLab :: Laberinto -- ^ Laberinto de interés
+    -> Maybe Laberinto -- ^ Lo que se encuentra hacia la derecha
 derechaLab = flip obtenerLaberintoPorDir $ Derecha
 
--- Funcion que dado un laberinto me da el laberinto (o no) que conseguira
--- si sigue derecho
-rectoLab :: Laberinto -> Maybe Laberinto
+{- | Función que dado un laberinto me da el laberinto (o no) que conseguira
+ si sigue derecho
+-}
+rectoLab :: Laberinto -- ^ Laberinto de interés
+    -> Maybe Laberinto -- ^ Lo que se encuentra si seguimos derecho
 rectoLab = flip obtenerLaberintoPorDir $ Recto
 
 ---------------------------
 -- Funciones de utilidad --
 ---------------------------
 
--- | Funcion que recibe una cadena de direcciones y construye un laberinto a partir
--- de esa ruta
-construirLaberintoDeRuta :: Ruta -> Laberinto
+{- | Función que recibe una cadena de direcciones y construye un laberinto a partir
+de esa ruta. El laberinto resultante estará compuesto de trifurcaciones, no tesoros.
+Ejemplo:
+
+@
+>>> construirLaberintoDeRuta [Recto, Recto]
+Left (Trifurcacion {
+    izquierda = Nothing, derecha = Nothing, recto = Just (Left (Trifurcacion {
+        izquierda = Nothing, derecha = Nothing, recto = Just (Left (Trifurcacion {
+            izquierda = Nothing, derecha = Nothing
+        }))
+    }))
+})
+@
+-}
+construirLaberintoDeRuta :: Ruta -- ^ Ruta a expandir
+    -> Laberinto -- ^ Laberinto resultante de seguir la ruta.
 construirLaberintoDeRuta [] = Left caminoSinSalida
 construirLaberintoDeRuta (x:xs) =
     Left $ alterarTrifurcacion caminoSinSalida (Just $ construirLaberintoDeRuta xs) x
 
 
--- | Funcion que recorre el laberinto hasta que encuentre una pared.
--- Cuando se consiga, se modifica el laberinto de modo que se extienda
--- el laberinto con la ruta restante.
-abrirRutaPared :: Laberinto -> Ruta -> Laberinto
+{- | Función que recorre el laberinto hasta que encuentre una pared.
+Cuando se consiga, se modifica el laberinto de modo que se extienda
+el laberinto con la ruta restante.
+-}
+abrirRutaPared :: Laberinto -- ^ Laberinto que se esta recorriendo
+    -> Ruta -- ^ Ruta que se esta siguiendo
+    -> Laberinto -- ^ Laberinto basado en el anterior pero con posibles
+                -- trifurcaciones nuevas resultantes de abrir paredes
 abrirRutaPared l [] = l
 abrirRutaPared l (x:xs) =
     -- Extraemos la trifurcacion
@@ -146,9 +229,14 @@ abrirRutaPared l (x:xs) =
             Just lab -> abrirRutaPared lab xs
     in Left $ alterarTrifurcacion trif (Just laberintoAPegar) x
 
--- | Funcion que dada una direccion, un laberinto y una ruta pone en Nothing
--- la direccion en el laberinto luego de recorrer la ruta
-derrumbarPared :: Laberinto -> Ruta -> Direccion -> Maybe Laberinto
+{- | Función que dada una direccion, un laberinto y una ruta pone en Nothing
+la direccion en el laberinto luego de recorrer la ruta
+-}
+derrumbarPared :: Laberinto -- ^ Laberinto que se está recorriendo
+    -> Ruta -- ^ Ruta que se esta siguiendo
+    -> Direccion  -- ^ Direccion en la que se va a poner @Nothing@ cuando se termine de recorrer
+    -> Maybe Laberinto -- ^ Laberinto envuelto en Maybe. La unica razón de hacer esto es para facilitar
+                        -- el pasaje de argumentos a las funciones que usa esta.
 derrumbarPared l [] d =
     let Left trif = l in Just $ Left $ alterarTrifurcacion trif Nothing d
 derrumbarPared l (x:xs) d =
@@ -158,9 +246,12 @@ derrumbarPared l (x:xs) d =
             Just lab -> Left $ alterarTrifurcacion trif (derrumbarPared lab xs d) x
             Nothing -> Left $ alterarTrifurcacion trif (derrumbarPared l xs d) x
 
--- | Funcion que dado un laberinto y una ruta determina si al final de la ruta
--- el usuario se encontrara en un tesoro o no.
-caigoEnTesoro :: Laberinto -> Ruta -> Bool
+{- | Función que dado un laberinto y una ruta determina si al final de la ruta
+el usuario se encontrara en un tesoro o no.
+-}
+caigoEnTesoro :: Laberinto -- ^ Laberinto que se desea recorrer
+    -> Ruta -- ^ Ruta que se desea recorrer
+    -> Bool -- ^ Hay un tesoro al final del recorrido
 caigoEnTesoro (Right tesoro) [] = True
 caigoEnTesoro (Left trif) [] = False
 caigoEnTesoro l (r:rs) =
@@ -169,11 +260,14 @@ caigoEnTesoro l (r:rs) =
             Just lab -> True && caigoEnTesoro lab rs
             Nothing -> True && caigoEnTesoro l rs
 
--- | Funcion que toma un laberinto, una ruta y si al final de esta hay un tesoro,
--- se elimina y si habia un camino despues del mismo se reemplaza con este.
--- La precondicion es que la ruta que se siga en el laberinto lleve a un tesoro
--- cuando la ruta este vacia
-tomarTesoro :: Laberinto -> Ruta -> Laberinto
+{- | Función que toma un laberinto, una ruta y si al final de esta hay un tesoro,
+se elimina y si habia un camino despues del mismo se reemplaza con este.
+La precondicion es que la ruta que se siga en el laberinto __lleve a un tesoro
+cuando la ruta este vacia__
+-}
+tomarTesoro :: Laberinto -- ^ Laberinto que se esta recorriendo
+    -> Ruta -- ^ Ruta a seguir
+    -> Laberinto -- Laberinto tal que el tesoro al final ya no esta y se realizaron las conexiones pertinentes.
 -- El caso con la ruta vacia no es de nuestro interes
 tomarTesoro _ [] = error "Uso incorrecto de tomarTesoro"
 -- Ya recorri toda la ruta y el siguiente step es un tesoro por la
@@ -200,10 +294,13 @@ tomarTesoro l@(Left trif) (r:rs) =
             Nothing -> tomarTesoro l rs
             Just lab -> Left $ alterarTrifurcacion trif (Just $ tomarTesoro lab rs) r
 
--- | Funcion que recorre una ruta y anade un mapa justo en entre
--- el laberinto anterior a terminar la ruta y el siguiente (si hay).
--- Como precondicion establezco que debe haber al menos una ruta
-ponerTesoro :: Laberinto -> Ruta -> Laberinto
+{- | Función que recorre una ruta y anade un tesoro justo en entre
+el laberinto anterior a terminar la ruta y el siguiente (si hay).
+Como precondicion establezco que debe haber al menos una ruta
+-}
+ponerTesoro :: Laberinto -- ^ Laberinto que se esta recorriendo
+    -> Ruta -- ^ Ruta que se esta siguiendo
+    -> Laberinto -- ^ Laberinto con el tesoro al final de la ruta
 -- Aqui empato el laberinto que se obtiene siguiendo la ruta con el tesoro nuevo
 -- y este con el actual
 ponerTesoro l [x] =
@@ -225,9 +322,12 @@ ponerTesoro l (x:xs) =
             Left trif -> Left $ alterarTrifurcacion trif nuevoLaberinto x
             Right tesoro -> Right $ crearTesoro (descripcion tesoro) nuevoLaberinto
 
--- Funcion que dado un laberinto y una ruta imprime el tesoro que hay al final
--- de esa ruta. Como precondicion debe existir un tesoro al final de la ruta
-imprimirTesoro :: Laberinto -> Ruta -> String
+{- | Función que dado un laberinto y una ruta imprime el tesoro que hay al final
+de esa ruta. Como precondicion __debe existir un tesoro al final de la ruta__
+-}
+imprimirTesoro :: Laberinto -- ^ Laberinto que se está recorriendo
+    -> Ruta -- ^ Ruta que se esta siguiendo
+    -> String -- ^ Descripcion del tesoro encontrado al final del recorrido
 -- Caso base, cuando encontremos el tesoro devolvemos la descripcion de este
 imprimirTesoro (Right tesoro) [] = descripcion tesoro
 -- Caso recursivo, recorremos hacia la direccion que indique
@@ -236,8 +336,10 @@ imprimirTesoro l (x:xs) = let labSiguiente = obtenerLaberintoPorDir l x in
         Nothing -> imprimirTesoro l xs
         Just l' -> imprimirTesoro l' xs
 
--- Funcion que verifica si al final de la ruta se termina en un camino sin salida
-esRutaSinSalida :: Laberinto -> Ruta -> Bool
+-- | Función que verifica si al final de la ruta se termina en un camino sin salida
+esRutaSinSalida :: Laberinto -- ^ Laberinto que se está recorriendo
+    -> Ruta -- ^ Ruta que se esta siguiendo
+    -> Bool -- ^ Es una ruta sin salida
 esRutaSinSalida l [] =
     let l0 = izquierdaLab l
         l1 = derechaLab l
