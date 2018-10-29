@@ -238,13 +238,17 @@ derrumbarPared :: Laberinto -- ^ Laberinto que se está recorriendo
     -> Maybe Laberinto -- ^ Laberinto envuelto en Maybe. La unica razón de hacer esto es para facilitar
                         -- el pasaje de argumentos a las funciones que usa esta.
 derrumbarPared l [] d =
-    let Left trif = l in Just $ Left $ alterarTrifurcacion trif Nothing d
+    Just $ case l of
+        Left trif -> Left $ alterarTrifurcacion trif Nothing d
+        Right tesoro -> Right $ crearTesoro (descripcion tesoro) Nothing
 derrumbarPared l (x:xs) d =
     let labASeguir = obtenerLaberintoPorDir l x
-        Left trif = l
-        in Just $ case labASeguir of
-            Just lab -> Left $ alterarTrifurcacion trif (derrumbarPared lab xs d) x
-            Nothing -> Left $ alterarTrifurcacion trif (derrumbarPared l xs d) x
+        laberintoAPegar = case labASeguir of
+            Nothing -> derrumbarPared l xs d
+            Just lab -> derrumbarPared lab xs d
+        in Just $ case l of
+            Right tesoro -> Right $ crearTesoro (descripcion tesoro) laberintoAPegar
+            Left trif -> Left $ alterarTrifurcacion trif laberintoAPegar x
 
 {- | Función que dado un laberinto y una ruta determina si al final de la ruta
 el usuario se encontrara en un tesoro o no.
