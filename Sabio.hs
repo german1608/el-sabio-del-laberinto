@@ -22,7 +22,7 @@ opcionesPosiblesConMsj = [
     ("3", "Reportar pared abierta", reportarParedAbierta),
     ("4", "Reportar derrumbe", reportarDerrumbe),
     ("5", "Reportar tesoro tomado", reportarTesoroTomado),
-    ("6", "Reportar tesoro hallado", return ()),
+    ("6", "Reportar tesoro hallado", reportarTesoroHallado),
     ("7", "Dar nombre al laberinto", return ()),
     ("8", "Hablar de un laberinto de nombre conocido", return ())
     ]
@@ -103,6 +103,23 @@ reportarTesoroTomado = do
         ST.put (tomarTesoro labInicial ruta, [])
     else
         io $ putStrLn "La ruta suministrada no dirige a ningun tesoro"
+
+-- | Controlador para la opcion de reportar tesoros hallado
+reportarTesoroHallado :: Sabio
+reportarTesoroHallado = do
+    -- Obtenemos el laberinto actual
+    (labInicial, _) <- ST.get
+    io imprimirInstrDeRuta
+    c <- io getLine
+    let ruta = parsearRuta c
+    if length ruta == 0 then do
+        io $ putStrLn "La ruta no puede ser vacia"
+        reportarTesoroHallado
+    else if caigoEnTesoro labInicial ruta then
+        io $ putStrLn "Ya hay un tesoro al final de la ruta"
+    else
+        ST.put (ponerTesoro labInicial ruta, [])
+
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio

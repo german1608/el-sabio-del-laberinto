@@ -199,3 +199,26 @@ tomarTesoro l@(Left trif) (r:rs) =
         case labASeguir of
             Nothing -> tomarTesoro l rs
             Just lab -> Left $ alterarTrifurcacion trif (Just $ tomarTesoro lab rs) r
+
+-- | Funcion que recorre una ruta y anade un mapa justo en entre
+-- el laberinto anterior a terminar la ruta y el siguiente (si hay).
+-- Como precondicion establezco que debe haber al menos una ruta
+ponerTesoro :: Laberinto -> Ruta -> Laberinto
+-- Aqui empato el laberinto que se obtiene siguiendo la ruta con el tesoro nuevo
+-- y este con el actual
+ponerTesoro l [x] =
+    let labSiguiente = obtenerLaberintoPorDir l x
+        tesoroNuevo = Just $ Right $ crearTesoro "" labSiguiente
+        nuevoLaberinto = case l of
+            Left trif -> Left $ alterarTrifurcacion trif tesoroNuevo x
+            Right tesoro -> Right $ crearTesoro (descripcion tesoro) tesoroNuevo
+    in nuevoLaberinto
+
+-- Llamo recursivamente para ir construyendo el laberinto nuevo
+ponerTesoro l (x:xs) =
+    let labSiguiente = obtenerLaberintoPorDir l x
+    in case labSiguiente of
+        Nothing -> ponerTesoro l xs
+        Just lab -> let nuevoLaberinto = Just $ ponerTesoro lab xs in case lab of
+            Left trif -> Left $ alterarTrifurcacion trif nuevoLaberinto x
+            Right tesoro -> Right $ crearTesoro (descripcion tesoro) nuevoLaberinto
