@@ -19,7 +19,7 @@ io = ST.liftIO
 opcionesPosiblesConMsj :: [(String, String, Sabio)]
 opcionesPosiblesConMsj = [
     ("1", "Hablar de un laberinto nuevo", laberintoNuevo),
-    ("2", "Quiero darte una ruta", return ()),
+    ("2", "Quiero darte una ruta", preguntarRuta),
     ("3", "Reportar pared abierta", reportarParedAbierta),
     ("4", "Reportar derrumbe", reportarDerrumbe),
     ("5", "Reportar tesoro tomado", reportarTesoroTomado),
@@ -142,6 +142,66 @@ cargarLaberintoDeArchivo = do
     else do
         contents <- io $ readFile nombre
         ST.put (read contents, [])
+
+-- -- | Funcion que se llama cuando no hayan tesoros ni caminos sin salida
+-- -- luego de recorrer la ruta
+-- preguntarRuta' :: Sabio
+-- preguntarRuta' = do
+-- | Funcion que recorre
+recorrerLaberinto :: Sabio
+recorrerLaberinto = do
+    (lab, ruta) <- ST.get
+    io $ print lab
+    case ruta of
+        [] -> return ()
+        (r:rs) -> do
+            let l = obtenerLaberintoPorDir lab r
+            case l of
+                Nothing -> ST.put (lab, rs)
+                Just lab' -> ST.put (lab', rs)
+            recorrerLaberinto
+
+ejecutarRuta :: Sabio
+ejecutarRuta = do
+    (labInicial, ruta) <- ST.get
+    if caigoEnTesoro labInicial ruta then do
+        io $ putStr "¡Se ha encontrado el tesoro \""
+        io $ putStr $ imprimirTesoro labInicial ruta
+        io $ putStrLn "\"!"
+    else if esRutaSinSalida labInicial ruta then
+        io $ putStrLn "¡Has llegado a una ruta sin salida!"
+    else do
+        io $ print labInicial
+        ST.put (labInicial, ruta)
+        recorrerLaberinto
+
+        io $ putStrLn "Tu ruta no ha llevado a un tesoro o a un camino sin salida"
+        io $ putStrLn "Escoja una de las siguientes alternativas"
+        io $ putStrLn "1) Continuar ruta"
+        io $ putStrLn "2) Preguntar nueva ruta"
+        opcion <- io getLine
+        case opcion of
+            "1" -> do
+                (lab, _) <- ST.get
+                ST.put(lab, [])
+                preguntarRuta
+            "2" -> do
+                ST.put(labInicial, [])
+                preguntarRuta
+            _ -> do
+                io $ putStrLn "Opcion equivocada"
+
+-- | Controlador para preguntar la ruta al usuario
+preguntarRuta :: Sabio
+preguntarRuta = do
+    io imprimirInstrDeRuta
+    c <- io getLine
+    let ruta = parsearRuta c
+    (labInicial, _) <- ST.get
+    ST.put(labInicial, ruta)
+    ejecutarRuta
+    ST.put(labInicial, [])
+
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
