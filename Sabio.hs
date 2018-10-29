@@ -44,15 +44,13 @@ imprimirInstrDeRuta = do
     putStrLn "\t(x) fin"
     putStrLn "Ejemplo:"
     putStrLn "><^<^<x"
-    putStrLn "Si introduce un caracter erroneo en algun momento no se pierde la ruta"
+    putStrLn "Si introduce un caracter erroneo en algun momento se ignorará"
 
 leerRuta :: Sabio
 leerRuta = do
     c <- io getChar
     io $ print c
-    if not $ c `elem` ['>', '<', '^', 'x'] then do
-        io $ putStrLn "Caracter inválido."
-        leerRuta
+    if not $ c `elem` ['>', '<', '^', 'x'] then leerRuta
     else do
         (lab, ruta) <- ST.get
         case c of
