@@ -19,7 +19,7 @@ opcionesPosiblesConMsj = [
     ("1", "Hablar de un laberinto nuevo", laberintoNuevo),
     ("2", "Quiero darte una ruta", return ()),
     ("3", "Reportar pared abierta", reportarParedAbierta),
-    ("4", "Reportar derrumbe", return ()),
+    ("4", "Reportar derrumbe", reportarDerrumbe),
     ("5", "Reportar tesoro tomado", return ()),
     ("6", "Reportar tesoro hallado", return ()),
     ("7", "Dar nombre al laberinto", return ()),
@@ -56,7 +56,6 @@ laberintoNuevo = do
     ST.put (laberintoVacio, [])
     c <- io getLine
     ST.put (construirLaberintoDeRuta $ parsearRuta c, [])
-    io $ print $ construirLaberintoDeRuta $ parsearRuta c
 
 -- | controlador de la opcion para reportar pared abierta
 reportarParedAbierta :: Sabio
@@ -68,8 +67,25 @@ reportarParedAbierta = do
     c <- io getLine -- pedimos input
     let ruta = parsearRuta c -- parseamos el string con la ruta
     ST.put (abrirRutaPared labInicial ruta, ruta) -- Reemplazamos el estado para que vaya consumiendo la ruta
-    io $ print $ abrirRutaPared labInicial ruta
 
+-- | Controlador para la opcion para reportar derrumbe
+reportarDerrumbe :: Sabio
+reportarDerrumbe = do
+    -- Obtenemos el laberinto actual
+    (labInicial, _) <- ST.get
+    io imprimirInstrDeRuta
+    c <- io getLine
+    let ruta = parsearRuta c
+    io $ putStrLn "Ahora dame una direccion (mismo formato que el anterior):"
+    c <- io getLine
+    let prepared = derrumbarPared labInicial ruta
+    case c of
+        ">" -> ST.put(prepared Derecha, [])
+        "<" -> ST.put(prepared Izquierda, [])
+        "^" -> ST.put(prepared Recto, [])
+        _ -> do
+            io $ putStrLn "Opcion equivocada"
+            reportarDerrumbe
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio

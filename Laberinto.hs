@@ -146,3 +146,29 @@ abrirRutaPared l (x:xs) =
             Just lab -> abrirRutaPared lab xs
     in Left $ alterarTrifurcacion trif laberintoAPegar x
 
+-- | Funcion que dada una direccion, un laberinto y una ruta pone en Nothing
+-- la direccion en el laberinto luego de recorrer la ruta
+derrumbarPared :: Laberinto -> Ruta -> Direccion -> Laberinto
+derrumbarPared l [] d =
+    let Left trif = l in Left $ case d of
+        Derecha -> Trifurcacion {
+            izquierda = izquierda trif,
+            recto = recto trif,
+            derecha = Nothing
+        }
+        Izquierda -> Trifurcacion {
+            izquierda = Nothing,
+            recto = recto trif,
+            derecha = derecha trif
+        }
+        Recto -> Trifurcacion {
+            izquierda = izquierda trif,
+            recto = Nothing,
+            derecha = derecha trif
+        }
+derrumbarPared l (x:xs) d =
+    let labASeguir = obtenerLaberintoPorDir l x
+        Left trif = l
+        in case labASeguir of
+            Just lab -> Left $ alterarTrifurcacion trif (derrumbarPared lab xs d) x
+            Nothing -> Left $ alterarTrifurcacion trif (derrumbarPared l xs d) x
