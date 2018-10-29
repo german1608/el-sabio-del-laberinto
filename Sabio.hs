@@ -45,31 +45,18 @@ imprimirInstrDeRuta = do
     putStrLn "\t(<) izquierda"
     putStrLn "\t(^) recto"
     putStrLn "Ejemplo:"
-    putStrLn "><^<^<x"
+    putStrLn "><^<^<"
     putStrLn "Si introduce un caracter erroneo en algun momento se ignorará"
 
 -- | Funcion que dada una ruta del usuario construye un laberinto
 -- que contiene solo esa ruta. La ruta debe estar al reves
-construirLaberintoDeRuta :: Sabio
-construirLaberintoDeRuta = do
+construirLaberintoDeRuta :: [Direccion] -> Sabio
+construirLaberintoDeRuta [] = return ()
+construirLaberintoDeRuta (x:xs) = do
     (lab, ruta) <- ST.get
-    case ruta of
-        [] -> return ()
-        x:xs -> do
-            let trif = alterarTrifurcacion caminoSinSalida lab x
-            ST.put (Left trif, xs)
-            construirLaberintoDeRuta
-
-leerRuta :: Sabio
-leerRuta = do
-    c' <- io getLine
-    let c = filter (\x -> x `elem` ['<', '>', '^'])  c'
-    let ruta = map (\c -> case c of
-            '>' -> Derecha
-            '<' -> Izquierda
-            '^' -> Recto) c
-    (lab, _) <- ST.get
-    ST.put (lab, reverse ruta)
+    let trif = alterarTrifurcacion caminoSinSalida lab x
+    ST.put (Left trif, xs)
+    construirLaberintoDeRuta xs
 
 -- | Funcion que reemplaza el laberinto actual por el nuevo laberinto
 -- que diga el usuario
@@ -77,8 +64,8 @@ laberintoNuevo :: Sabio
 laberintoNuevo = do
     io $ imprimirInstrDeRuta
     ST.put $ (laberintoVacio, [])
-    leerRuta
-    construirLaberintoDeRuta
+    c <- io getLine
+    construirLaberintoDeRuta $ reverse $ parsearRuta c
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
