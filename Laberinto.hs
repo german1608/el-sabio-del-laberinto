@@ -232,3 +232,19 @@ imprimirTesoro (Right tesoro) [] = descripcion tesoro
 imprimirTesoro l (x:xs) =
     let Just labSiguiente = obtenerLaberintoPorDir l x
     in imprimirTesoro labSiguiente xs
+
+-- Funcion que verifica si al final de la ruta se termina en un camino sin salida
+esRutaSinSalida :: Laberinto -> Ruta -> Bool
+esRutaSinSalida l [] =
+    let l0 = izquierdaLab l
+        l1 = derechaLab l
+        l2 = rectoLab l
+    in case (l0, l1, l2) of
+        (Nothing, Nothing, Nothing) -> True
+        _ -> False
+
+esRutaSinSalida l (x:xs) =
+    let labSiguiente = obtenerLaberintoPorDir l x
+    in case labSiguiente of
+        Nothing -> esRutaSinSalida l xs
+        Just lab -> esRutaSinSalida lab xs
