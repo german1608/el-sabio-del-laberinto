@@ -30,6 +30,9 @@ data Tesoro = Tesoro {
 data Direccion = Izquierda | Derecha | Recto
     deriving Show
 
+-- | Cadena de Direcciones
+type Ruta = [Direccion]
+
 -- | Funcion que lee un string y lo transforma a direcciones
 parsearRuta :: String -> [Direccion]
 parsearRuta = map (\c -> case c of
@@ -113,3 +116,33 @@ derechaLab = flip obtenerLaberintoPorDir $ Derecha
 -- si sigue derecho
 rectoLab :: Laberinto -> Maybe Laberinto
 rectoLab = flip obtenerLaberintoPorDir $ Recto
+
+---------------------------
+-- Funciones de utilidad --
+---------------------------
+
+-- | Funcion que recibe una cadena de direcciones y construye un laberinto a partir
+-- de esa ruta
+construirLaberintoDeRuta :: Ruta -> Laberinto
+construirLaberintoDeRuta [] = Left caminoSinSalida
+construirLaberintoDeRuta (x:xs) =
+    Left $ alterarTrifurcacion caminoSinSalida (construirLaberintoDeRuta xs) x
+
+
+-- | Funcion que recorre el laberinto hasta que encuentre una pared.
+-- Cuando se consiga, se modifica el laberinto de modo que se extienda
+-- el laberinto con la ruta restante.
+abrirRutaPared :: Laberinto -> Ruta -> Laberinto
+abrirRutaPared l [] = l
+abrirRutaPared l (x:xs) =
+    -- Extraemos la trifurcacion
+    let Left trif = l
+        -- Obtenemos el empate
+        labSiguiente = obtenerLaberintoPorDir l x
+        laberintoAPegar = case labSiguiente of
+            -- Llegue a una pared, me toca construir un nuevo laberinto
+            Nothing -> construirLaberintoDeRuta xs
+            -- Puedo seguir recorriendo
+            Just lab -> abrirRutaPared lab xs
+    in Left $ alterarTrifurcacion trif laberintoAPegar x
+

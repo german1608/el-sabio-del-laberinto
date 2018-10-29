@@ -5,7 +5,6 @@ import Data.Char (digitToInt, isDigit)
 import Data.List (intercalate)
 import qualified Control.Monad.State as ST
 
-type Ruta = [Direccion]
 type Sabio = ST.StateT (Laberinto, Ruta) IO ()
 
 -- Alias para liftIO
@@ -19,7 +18,7 @@ opcionesPosiblesConMsj :: [(String, String, Sabio)]
 opcionesPosiblesConMsj = [
     ("1", "Hablar de un laberinto nuevo", laberintoNuevo),
     ("2", "Quiero darte una ruta", return ()),
-    ("3", "Reportar pared abierta", return ()),
+    ("3", "Reportar pared abierta", reportarParedAbierta),
     ("4", "Reportar derrumbe", return ()),
     ("5", "Reportar tesoro tomado", return ()),
     ("6", "Reportar tesoro hallado", return ()),
@@ -48,24 +47,29 @@ imprimirInstrDeRuta = do
     putStrLn "><^<^<"
     putStrLn "Si introduce un caracter erroneo en algun momento se ignorará"
 
--- | Funcion que dada una ruta del usuario construye un laberinto
--- que contiene solo esa ruta. La ruta debe estar al reves
-construirLaberintoDeRuta :: [Direccion] -> Sabio
-construirLaberintoDeRuta [] = return ()
-construirLaberintoDeRuta (x:xs) = do
-    (lab, ruta) <- ST.get
-    let trif = alterarTrifurcacion caminoSinSalida lab x
-    ST.put (Left trif, xs)
-    construirLaberintoDeRuta xs
 
 -- | Funcion que reemplaza el laberinto actual por el nuevo laberinto
 -- que diga el usuario
 laberintoNuevo :: Sabio
 laberintoNuevo = do
-    io $ imprimirInstrDeRuta
-    ST.put $ (laberintoVacio, [])
+    io imprimirInstrDeRuta
+    ST.put (laberintoVacio, [])
     c <- io getLine
-    construirLaberintoDeRuta $ reverse $ parsearRuta c
+    ST.put (construirLaberintoDeRuta $ parsearRuta c, [])
+    io $ print $ construirLaberintoDeRuta $ parsearRuta c
+
+-- | controlador de la opcion para reportar pared abierta
+reportarParedAbierta :: Sabio
+reportarParedAbierta = do
+    -- Obtenemos el estado actual dl laberinto para recuperar el inicio
+    -- cuando terminemos de ejecutar esto
+    (labInicial, _) <- ST.get
+    io imprimirInstrDeRuta -- Imprimimos instrucciones
+    c <- io getLine -- pedimos input
+    let ruta = parsearRuta c -- parseamos el string con la ruta
+    ST.put (abrirRutaPared labInicial ruta, ruta) -- Reemplazamos el estado para que vaya consumiendo la ruta
+    io $ print $ abrirRutaPared labInicial ruta
+
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
