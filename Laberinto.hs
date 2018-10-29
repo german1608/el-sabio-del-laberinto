@@ -218,8 +218,10 @@ ponerTesoro l [x] =
 ponerTesoro l (x:xs) =
     let labSiguiente = obtenerLaberintoPorDir l x
     in case labSiguiente of
+        -- Es una pared
         Nothing -> ponerTesoro l xs
-        Just lab -> let nuevoLaberinto = Just $ ponerTesoro lab xs in case lab of
+        -- Hay que ver si el siguiente laberinto es un tesoro o un laberinto
+        Just lab -> let nuevoLaberinto = Just $ ponerTesoro lab xs in case l of
             Left trif -> Left $ alterarTrifurcacion trif nuevoLaberinto x
             Right tesoro -> Right $ crearTesoro (descripcion tesoro) nuevoLaberinto
 
@@ -248,3 +250,4 @@ esRutaSinSalida l (x:xs) =
     in case labSiguiente of
         Nothing -> esRutaSinSalida l xs
         Just lab -> esRutaSinSalida lab xs
+
