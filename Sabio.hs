@@ -35,6 +35,7 @@ imprimirMenu :: Sabio
 imprimirMenu = io $ putStr $
     foldl (\acc (x,y) -> acc ++ x ++ ") " ++ y ++ "\n") "" opcionesPosiblesConMsj
 
+-- | Funcion que imprime las instrucciones para pedir la ruta al usuario
 imprimirInstrDeRuta :: IO ()
 imprimirInstrDeRuta = do
     putStrLn "Introduzca la ruta:"
@@ -46,6 +47,18 @@ imprimirInstrDeRuta = do
     putStrLn "><^<^<x"
     putStrLn "Si introduce un caracter erroneo en algun momento se ignorará"
 
+-- | Funcion que dada una ruta del usuario construye un laberinto
+-- que contiene solo esa ruta. La ruta debe estar al reves
+construirLaberintoDeRuta :: Sabio
+construirLaberintoDeRuta = do
+    (lab, ruta) <- ST.get
+    case ruta of
+        [] -> return ()
+        x:xs -> do
+            let trif = alterarTrifurcacion caminoSinSalida lab x
+            ST.put (Left trif, xs)
+            construirLaberintoDeRuta
+
 leerRuta :: Sabio
 leerRuta = do
     c' <- io getLine
@@ -55,7 +68,7 @@ leerRuta = do
             '<' -> Izquierda
             '^' -> Recto) c
     (lab, _) <- ST.get
-    ST.put (lab, ruta)
+    ST.put (lab, reverse ruta)
 
 -- | Funcion que reemplaza el laberinto actual por el nuevo laberinto
 -- que diga el usuario
@@ -64,9 +77,8 @@ laberintoNuevo = do
     io $ imprimirInstrDeRuta
     ST.put $ (laberintoVacio, [])
     leerRuta
-    io $ putStrLn "listo"
-    (_, ruta) <- ST.get
-    io $ print ruta
+    construirLaberintoDeRuta
+    (lab, ruta) <- ST.get
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
