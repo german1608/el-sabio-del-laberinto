@@ -1,6 +1,6 @@
 module Main (main) where
 import Laberinto
-import System.IO (hSetBuffering, stdout, BufferMode(NoBuffering))
+import System.IO (writeFile)
 import Data.Char (digitToInt, isDigit)
 import Data.List (intercalate)
 import Data.Maybe (fromJust)
@@ -23,7 +23,7 @@ opcionesPosiblesConMsj = [
     ("4", "Reportar derrumbe", reportarDerrumbe),
     ("5", "Reportar tesoro tomado", reportarTesoroTomado),
     ("6", "Reportar tesoro hallado", reportarTesoroHallado),
-    ("7", "Dar nombre al laberinto", return ()),
+    ("7", "Dar nombre al laberinto", darNombreAlLaberinto),
     ("8", "Hablar de un laberinto de nombre conocido", return ())
     ]
 
@@ -120,6 +120,15 @@ reportarTesoroHallado = do
     else
         ST.put (ponerTesoro labInicial ruta, [])
 
+-- | Controlador para dar nombre al laberinto
+darNombreAlLaberinto :: Sabio
+darNombreAlLaberinto = do
+    io $ putStr "Escriba el nombre del laberinto: "
+    nombre <- io getLine
+    (lab, _) <- ST.get
+    io $ writeFile nombre $ show lab
+    io $ putStrLn "¡Archivo guardado!"
+
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
@@ -133,6 +142,7 @@ prompt = do
         io $ putStr "Las opciones correctas son: "
         io $ putStrLn $ intercalate ", "  opciones
     else do
+        -- Obtenemos la accion a ejecutar
         let [(_, _, accion)] = filter (\(x,_,_) -> x == opcion) opcionesPosiblesConMsj
         accion
     prompt
