@@ -30,6 +30,13 @@ data Tesoro = Tesoro {
 data Direccion = Izquierda | Derecha | Recto
     deriving Show
 
+-- | Funcion que lee un string y lo transforma a direcciones
+parsearRuta :: String -> [Direccion]
+parsearRuta = map (\c -> case c of
+        '>' -> Derecha
+        '<' -> Izquierda
+        '^' -> Recto) . filter (\x -> x `elem` "<>^")
+
 -- Funciones de Construccion
 -- | Funcion que crea un camino sin salida
 caminoSinSalida :: Trifurcacion
