@@ -78,7 +78,6 @@ laberintoNuevo = do
     ST.put $ (laberintoVacio, [])
     leerRuta
     construirLaberintoDeRuta
-    (lab, ruta) <- ST.get
 
 -- | Funcion que hace prompt al user por las opciones adecuadas
 prompt :: Sabio
