@@ -1,5 +1,6 @@
 module Main (main) where
 import Laberinto
+import System.IO (hSetBuffering, stdout, BufferMode(NoBuffering))
 import Data.Char (digitToInt, isDigit)
 import Data.List (intercalate)
 import qualified Control.Monad.State as ST
@@ -41,29 +42,20 @@ imprimirInstrDeRuta = do
     putStrLn "\t(>) derecha"
     putStrLn "\t(<) izquierda"
     putStrLn "\t(^) recto"
-    putStrLn "\t(x) fin"
     putStrLn "Ejemplo:"
     putStrLn "><^<^<x"
     putStrLn "Si introduce un caracter erroneo en algun momento se ignorará"
 
 leerRuta :: Sabio
 leerRuta = do
-    c <- io getChar
-    io $ print c
-    if not $ c `elem` ['>', '<', '^', 'x'] then leerRuta
-    else do
-        (lab, ruta) <- ST.get
-        case c of
-            'x' -> return ()
-            '>' -> do
-                ST.put $ (lab, Derecha:ruta)
-                leerRuta
-            '<' -> do
-                ST.put $ (lab, Izquierda:ruta)
-                leerRuta
-            '^' -> do
-                ST.put $ (lab, Recto:ruta)
-                leerRuta
+    c' <- io getLine
+    let c = filter (\x -> x `elem` ['<', '>', '^'])  c'
+    let ruta = map (\c -> case c of
+            '>' -> Derecha
+            '<' -> Izquierda
+            '^' -> Recto) c
+    (lab, _) <- ST.get
+    ST.put (lab, ruta)
 
 -- | Funcion que reemplaza el laberinto actual por el nuevo laberinto
 -- que diga el usuario
